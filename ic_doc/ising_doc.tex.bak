@@ -1,0 +1,321 @@
+\documentclass{article}
+
+\usepackage[left=30mm, top=15mm, right=15mm, bottom=15mm, nohead, footskip=10mm]{geometry}
+\usepackage{graphicx}
+\usepackage{blindtext}
+\usepackage{indentfirst}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[section]{placeins}
+
+
+\title{Project: Monte Carlo simulations of the 2D Ising model}
+\date{2019, May}
+\author{Olha Tkachenko}
+
+\linespread{1.1}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction. Ising Model }
+
+\subsection{Square-lattice 2D Icing Model Problem}
+	
+Consider a square lattice $\Lambda$ of linear size L.
+
+The task is to write a computer code based on the Metropolis Monte Carlo method to simulate the dynamics of the nearest-neighbor ferromagnetic Ising model with Hamiltonian: 
+
+\[H(\overrightarrow{\sigma}) = -J\sum_{(i, j)} \sigma_i \sigma_j, ~i,j \in \Lambda, ~J > 0\]
+
+where $\sigma = {\sigma_i, ~i \in \Lambda}$ denotes a configuration of spins on $\Lambda$, with $\sigma_i = \pm1$, and the sum is over pairs of adjacent spins (every pair is computed once).
+
+In the thermodynamic limit the 2D Ising model undergoes a phase transition at the inverse critical temperature:
+
+\[\beta_c = \frac{\ln1 ~+~ \sqrt{2}}{2J}\]
+
+For $\beta > \beta_c$, the 2D Ising model exhibits a spontaneous magnetization
+
+\[m_\beta ~=~ [1 ~-~ \frac{1}{\sinh^4(2 \beta J)}]^\frac{1}{8}\]
+
+In the simulations consider $k_\beta$ = J = 1 (in this case $T_c = \beta_c^{-1} \approx 2.269$) and L = 100.
+
+Time is measured in number of sweeps N = $L^2$.
+
+Use periodic boundary conditions and consider the following initial configurations ${\sigma_i}$: (i)  $\sigma_i$ = +1 ("i.c. P"), (ii) $\sigma_i$ = -1 ("i.c. N") and (iii) $\sigma_i$ = +1 with probability $\frac{1}{2}$ ("random i.c.").
+
+Compute the following observables:
+\begin{itemize}
+
+\item the magnetization (per spin) $m(\sigma) = \frac{1}{N} \sum_{i \in \Lambda} \sigma_i$, as a function of time (for T = 2.0 $<$ $T_c$ and T = 2.5 $>$ $T_c$ and using the i.c. above);
+
+\item the energy $e(\sigma) = H(\sigma)^{}/N^{}$ as a function of time (for T = 2.0 $<$ $T_c$ and T = 2.5 $>$ $T_c$ and using the i.c. above);
+
+\item the mean magnetization $<m>$ as the function of the temperature T;
+
+\item the mean energy $<e>$ as the function of the temperature T;
+
+\item the magnetic susceptibility $\chi = βN(<m^2> - <m>^2)$ as a function of T;
+
+\item the specific heat $c = \beta^2 N(<e^2> - <e>^2)$ as a function of T;
+
+\item the microscopic configurations ${\sigma_i}$ sampled at different times: $t_k = 2*10^3k$, with k = 1,...,9, for $T~=~2~<~T_c$ and $T~=~2.5~>~T_c$.
+
+\end{itemize}
+
+\subsection{Metropolis Monte Carlo Algorithm}
+
+\begin{itemize}
+
+\item[1.] Initialization. 
+
+A (L $\times$ L) square lattice is taken; positive, negative or random (with probability 0.5) spin configuration is taken as an initail lattice state assigning $\sigma_i = +1 ~ \forall i \in \Lambda$ ("P i.c."), $\sigma_i = -1 ~ \forall i \in \Lambda$ ("N i.c.") or $\sigma_i = +1$ with probability $\frac{1}{2}~ \forall i \in \Lambda$ ("R i.c.").
+
+\item[2.] Updating.
+
+Given $X_t = \overrightarrow{\sigma}$:
+
+\begin{itemize}
+
+\item Pick a coordinate $j \in V$ uniformly at random
+
+\item Set the proposed new state  $\overrightarrow{Y} = {\sigma_1,..., \sigma_{j-1}, -\sigma_j, \sigma_{j+1},..., \sigma_{|V|}}$
+
+\item Compute \[\alpha = \min\{1,~\frac{\exp(-\beta H(Y))}{\exp(-\beta H(\sigma))} \}~=~min\{1,~exp(-\beta \triangle H)\},\] where $\triangle H~=~H(Y)~-~H(\sigma)$
+
+Introducing $\triangle H$ into the simulation increases the productivity of the algorithm, since $\triangle H$ needs to be calculated only for the neighborhood of the chosen spin (for other spins it is equal to zero). Therefore, it is not necessary to compute H(Y) on the whole proposed  set Y. Therefore, step of the algorithm can be modified:
+
+\[If ~ \triangle H < 0 ~ set ~ \alpha = 1. ~ Else ~ if ~ \triangle H > 0 ~=>~ \alpha=\exp\{-\beta \triangle H\}\]
+
+\item Determine, wether to accept or decline the move. Generate $U \sim U[0,1]$. If $U  \leq \alpha$, then set $X_{t+1} = Y$, otherwise $X_t = \overrightarrow{\sigma}$
+
+\item Reapeat all the steps at least $L^2$ times for each iteration of the algorithm.
+
+\end{itemize}
+
+
+\item[3.] Calculating the Energy and Magnetization of a Monte Carlo Iteration.
+
+The Magnetization and Energy as functions of time are calculated at each iteration of the algorithm. In order to obtain the total energy of the lattice, the energy of all nearest neighbor pairs must be considered. If the interaction energy of the right and down neighbors is considered of each spin on lattice, the total energy is calculated.  Important condition that must be maintained while implementing the Metropolis algorithm is the periodic boundary condition. This condition is defined as follows:
+The Periodic boundary condition: For an $L \times L$ 2D lattice, grid points (0, j)
+and (L-1, j) are north-south neighbors and (i, 0) and (i, L-1) are west-east neighbors.
+Essentially, this defines a wrapped around lattice.  
+
+\item[4.] Repeat steps 2 and 3 over given period of time.
+
+\end{itemize}
+
+\section{Simulation}
+
+\subsection{Negative Initial Configuration}
+
+Initial lattice $\sigma$, where  $\sigma_i=-1 ~ \forall i$. Microscopic configurations of the simulation, that are sampled at times $t_k = 2*10^3 k$, with k = 1,...,9, are shown on Figure ~\ref{fig:configN}.
+Where red color corresponds to the value “-1” and yellow color corresponds to the value “1”.
+
+Figure ~\ref{fig:configN20} corresponds to the configurations sampled at temperature T = 2.0, most of its spins are red. The reason for this is the fact that small temperatures (large positive $\beta$) create tendency for spins to align. And the chance for spins to swap is small. Therefore, the lattice sticks to the initial condition. The material appeals to be ferromagnetic.
+
+In the case where T = 2.5 (Figure ~\ref{fig:configN25}), different behavior is observed. Spins of the lattice do not seem to align. And the resulting configurations appear random, disordered. The reason for it is paramagnetic behavior. The high values of temperatures (small positive $\beta$) create tendency for spins to flip. Therefore, the material losses the magnetization. 
+
+An important observation is that the rate of oscillation is substantially bigger in case of the higher temperatures. This is due to the fact that in ferromagnetic regime spins in the lattice tend to align and change their values rarely. Therefore, the energy and magnetization per spin do not change much. This is not true in case of paramagnetic regime (high temperatures) as spins tend to change their values a lot, therefore, variables also tend to oscillate more.   
+
+Figure ~\ref{fig:meN20} shows time dependence of the energy and magnetization per spin, where T = 2.0.
+
+Figure ~\ref{fig:meN25} shows the dependency in case of T = 2.5. 
+
+\begin{figure}[h]
+     \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_0N.png}
+         \caption{Configurations for T=2.0}
+         \label{fig:configN20}
+     \end{subfigure}
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_5N.png}
+         \caption{Configurations for T=2.5}
+         \label{fig:configN25}
+     \end{subfigure}
+     \caption{Microscopic configurations sampled at different times (for N i.c.)}
+     \label{fig:configN}
+\end{figure}
+
+\begin{figure}[h]
+     \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meN2_0.png}
+    	\caption{T=2.0}
+    	\label{fig:meN20}
+     \end{subfigure}
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meN2_5.png}
+    	\caption{T=2.5}
+    	\label{fig:meN25}
+     \end{subfigure}
+     \caption{Energy and magnetization for N i.c.}
+     \label{fig:meN}
+\end{figure}
+
+\subsection{Positive Initial Configuration}
+
+Statements for negative initial configurations are also valid in case of initial configuration where all spins are positive directed. 
+Figures \ref{fig:configP20} and \ref{fig:configP25} show the microscopic configuration for T = 2.0 and T = 2.5 in the case of the positive initial configuration (P i.c.).
+Figures \ref{fig:meP20} and \ref{fig:meP25} show the time dependency of the energy and magnetization per spin.
+
+\begin{figure}[h]
+     \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_0P.png}
+         \caption{Configurations for T=2.0}
+         \label{fig:configP20}
+     \end{subfigure}
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_5P.png}
+         \caption{Configurations for T=2.5}
+         \label{fig:configP25}
+     \end{subfigure}
+     \caption{Microscopic configurations sampled at different times (for P i.c.)}
+     \label{fig:configP}
+\end{figure}
+
+\begin{figure}[h]
+     \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meP2_0.png}
+    	\caption{T=2.0}
+    	\label{fig:meP20}
+     \end{subfigure}
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meP2_5.png}
+    	\caption{T=2.5}
+    	\label{fig:meP25}
+     \end{subfigure}
+     \caption{Energy and magnetization for P i.c.}
+     \label{fig:meP}
+\end{figure}
+
+\subsection{Random Initial Configuration}
+
+Random initial configuration is more time consuming, since the thermalization time may be very big. Therefore, it may take some time to compute simulations for random initial configurations.
+
+Since in the low temperature regime the spins tend to align, after some time the lattice with dominating amount of either "-1" or "+1" is attained. The initial configuration is random, therefore, the case to which it will led is not known.
+
+Figures \ref{fig:configR20} and \ref{fig:configR201} show the configurations for random initial conditions in case of T = 2.0. It is seen that in first case "+1" dominates in the configuration and in the other case "-1" dominates. The behavior for the case T = 2.5 (Figures \ref{fig:configR25} and \ref{fig:configR251}) is almost the same for different initial configurations.
+
+Figures \ref{fig:meR} and \ref{fig:meR1} show the behavior of the energy and magnetization per spin, depending on time. For T = 2.0 spins with value "+1" are in majority in the Figure \ref{fig:meR20} and spins with value "-1" are in majority in the Figure \ref{fig:meR201}. 
+
+\begin{figure}[htb!]
+     \centering
+     \begin{subfigure}{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_0R.png}
+         \caption{Configurations for T=2.0}
+         \label{fig:configR20}
+     \end{subfigure}
+     \begin{subfigure}{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_5R.png}
+         \caption{Configurations for T=2.5}
+         \label{fig:configR25}
+     \end{subfigure}
+     \caption{Microscopic configurations sampled at different times (for R i.c.)}
+     \label{fig:configR}
+\end{figure}
+
+\begin{figure}[htb!]
+     \centering
+     \begin{subfigure}{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meR2_0.png}
+    	\caption{T=2.0}
+    	\label{fig:meR20}
+     \end{subfigure}
+     \begin{subfigure}{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meR2_5.png}
+    	\caption{T=2.5}
+    	\label{fig:meR25}
+     \end{subfigure}
+     \caption{Energy and magnetization for R i.c.}
+     \label{fig:meR}
+\end{figure}
+
+\begin{figure}[htb!]
+     \centering
+     \begin{subfigure}{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_0R1.png}
+         \caption{Configurations for T=2.0}
+         \label{fig:configR201}
+     \end{subfigure}
+     \begin{subfigure}{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{latice2_5R1.png}
+         \caption{Configurations for T=2.5}
+         \label{fig:configR251}
+     \end{subfigure}
+     \caption{Microscopic configurations sampled at different times (for another R i.c.)}
+     \label{fig:configR1}
+\end{figure}
+
+\begin{figure}[htb!]
+     \centering
+     \begin{subfigure}{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meR2_01.png}
+    	\caption{T=2.0}
+    	\label{fig:meR201}
+     \end{subfigure}
+     \begin{subfigure}{0.45\textwidth}
+        \centering
+		\includegraphics[width=\textwidth]{meR2_51.png}
+    	\caption{T=2.5}
+    	\label{fig:meR251}
+     \end{subfigure}
+     \caption{Energy and magnetization for another R i.c.}
+     \label{fig:meR1}
+\end{figure}
+
+\subsection{Observables That Depend on Temperature T}
+
+Define a set of temperatures $T_s$ = \{$t_i$\}, i = 1,...,32.
+
+\begin{center}
+$T_s$ = \{1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.269,
+
+2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0\};  
+\end{center}
+
+In order to compute mean energy and magnetization it is needed to first find a part of a timeline where the mean value computed on all previously obtained values do not change much. The value reaches its equilibrium.
+
+Therefore, pression p is needed to be chosen and the time interval (the number of time steps that should satisfy the precision). The interval is used in order to avoid local equilibriums. On each time step difference between variables (average energy and average magnetization) that were obtained in the current and in the previous step need to be compared with the precision. If the condition is satisfied for the whole interval, thermalization time is reached and mean variables are computed. 
+
+Thermalization time is the timeline on which average value (of energy and magnetization) converges.
+
+In this simulation were chosen such parameters:
+
+\begin{itemize}
+
+\item precision p = $10^{-5}$
+\item interval on which difference of mean values should be less than precision = 5000
+
+\end{itemize}
+
+Figure \ref{fig:mean_R} shows the mean energy, absolute value of mean magnetization, magnetic susceptibility and specific heat for R i.c.  Minimal energy is obtained at minimal temperatures. The lattice losses the magnetization in the paramagnetic part (T > $T_c$) in the case of positive i.c. and in the case of negative i.c. it losses the magnetization in the ferromagnetic part ( T < $T_c$). All of the plots have a break in the point $T_c$, where their values tend to infinity. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{meanR.png}
+   	\caption{Observables that depend on temperature T for R i.c.}
+   	\label{fig:mean_R}
+\end{figure}
+
+
+\end{document}
